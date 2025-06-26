@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EazyLoan - Quick & Easy Loans</title>
+    <meta name="description" content="Get quick and easy loans with EazyLoan. Fast approval, competitive rates, and excellent customer service." />
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Error handling for missing root element -->
+    <script>
+      // Ensure root element exists
+      document.addEventListener('DOMContentLoaded', function() {
+        if (!document.getElementById('root')) {
+          console.error('❌ Root element not found!');
+          document.body.innerHTML = `
+            <div style="
+              padding: 2rem; 
+              text-align: center; 
+              font-family: system-ui, sans-serif;
+              max-width: 600px;
+              margin: 2rem auto;
+              border: 2px solid #ef4444;
+              border-radius: 0.5rem;
+              background: #fef2f2;
+            ">
+              <h1 style="color: #ef4444; margin-bottom: 1rem;">HTML Structure Error</h1>
+              <p style="margin-bottom: 1rem;">The root element is missing from the HTML.</p>
+              <p>Please contact support if this issue persists.</p>
+            </div>
+          `;
+        }
+      });
+      
+      // Global error handler
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+      });
+      
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Fallback for JavaScript disabled -->
+    <noscript>
+      <div style="
+        padding: 2rem; 
+        text-align: center; 
+        font-family: system-ui, sans-serif;
+        max-width: 600px;
+        margin: 2rem auto;
+        border: 2px solid #f59e0b;
+        border-radius: 0.5rem;
+        background: #fef3c7;
+      ">
+        <h1 style="color: #92400e; margin-bottom: 1rem;">JavaScript Required</h1>
+        <p>EazyLoan requires JavaScript to function properly. Please enable JavaScript in your browser and reload the page.</p>
+      </div>
+    </noscript>
+
+    <!-- LiveChat Integration Script -->
+    <script type="text/javascript">
+      function add_chatinline(){
+        var hccid=25388292;
+        var nt=document.createElement("script");
+        nt.async=true;
+        nt.src="https://mylivechat.com/chatinline.aspx?hccid="+hccid;
+        var ct=document.getElementsByTagName("script")[0];
+        ct.parentNode.insertBefore(nt,ct);
+      }
+      add_chatinline();
+    </script>
+  </body>
+</html>
