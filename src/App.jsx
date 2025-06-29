@@ -76,7 +76,6 @@ export default function App() {
 
   return (
     <Router>
-      <MockModeNotification />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<RootRoute />} />
