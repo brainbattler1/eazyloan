@@ -605,28 +605,47 @@ const LoanCalculator = ({ onClose }) => {
 
           .form-group label {
             display: block;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.025em;
           }
 
           .form-group input,
           .form-group select {
             width: 100%;
-            padding: 1rem;
+            padding: 1.25rem;
             border: 2px solid #e5e7eb;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1f2937;
+            background: #ffffff;
             transition: all 0.2s ease;
-            background: white;
+            min-height: 56px;
+            box-sizing: border-box;
+          }
+          
+          .form-group input::placeholder {
+            color: #9ca3af;
+            font-weight: 400;
+            opacity: 0.8;
           }
 
           .form-group input:focus,
           .form-group select:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            background: #fefefe;
+            color: #111827;
+          }
+          
+          .form-group input:hover,
+          .form-group select:hover {
+            border-color: #6b7280;
+            background: #fefefe;
           }
 
           .calculate-btn {

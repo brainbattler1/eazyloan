@@ -12,32 +12,41 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Error handling for missing root element -->
+    <!-- Improved error handling -->
     <script>
-      // Ensure root element exists
+      // Wait for DOM to be ready
       document.addEventListener('DOMContentLoaded', function() {
-        if (!document.getElementById('root')) {
-          console.error('❌ Root element not found!');
-          document.body.innerHTML = `
-            <div style="
-              padding: 2rem; 
-              text-align: center; 
-              font-family: system-ui, sans-serif;
-              max-width: 600px;
-              margin: 2rem auto;
-              border: 2px solid #ef4444;
-              border-radius: 0.5rem;
-              background: #fef2f2;
-            ">
-              <h1 style="color: #ef4444; margin-bottom: 1rem;">HTML Structure Error</h1>
-              <p style="margin-bottom: 1rem;">The root element is missing from the HTML.</p>
-              <p>Please contact support if this issue persists.</p>
-            </div>
-          `;
-        }
+        // Give React a moment to initialize
+        setTimeout(function() {
+          const rootElement = document.getElementById('root');
+          if (!rootElement) {
+            console.error('❌ Root element not found!');
+            // Only show error if React hasn't rendered anything
+            if (document.body.children.length <= 1) {
+              document.body.innerHTML = `
+                <div style="
+                  padding: 2rem; 
+                  text-align: center; 
+                  font-family: system-ui, sans-serif;
+                  max-width: 600px;
+                  margin: 2rem auto;
+                  border: 2px solid #ef4444;
+                  border-radius: 0.5rem;
+                  background: #fef2f2;
+                ">
+                  <h1 style="color: #ef4444; margin-bottom: 1rem;">HTML Structure Error</h1>
+                  <p style="margin-bottom: 1rem;">The root element is missing from the HTML.</p>
+                  <p>Please contact support if this issue persists.</p>
+                </div>
+              `;
+            }
+          } else {
+            console.log('✅ Root element found and ready');
+          }
+        }, 1000); // Wait 1 second for React to initialize
       });
       
-      // Global error handler
+      // Global error handler - only log, don't interfere
       window.addEventListener('error', function(event) {
         console.error('Global error:', event.error);
       });
@@ -67,16 +76,16 @@
         <p>EazyLoan requires JavaScript to function properly. Please enable JavaScript in your browser and reload the page.</p>
       </div>
     </noscript>
-
-    <!-- LiveChat Integration Script -->
+    
+    <!-- Live Chat Integration -->
     <script type="text/javascript">
-      function add_chatinline(){
-        var hccid=25388292;
-        var nt=document.createElement("script");
-        nt.async=true;
-        nt.src="https://mylivechat.com/chatinline.aspx?hccid="+hccid;
-        var ct=document.getElementsByTagName("script")[0];
-        ct.parentNode.insertBefore(nt,ct);
+      function add_chatinline() {
+        var hccid = 25388292;
+        var nt = document.createElement("script");
+        nt.async = true;
+        nt.src = "https://mylivechat.com/chatinline.aspx?hccid=" + hccid;
+        var ct = document.getElementsByTagName("script")[0];
+        ct.parentNode.insertBefore(nt, ct);
       }
       add_chatinline();
     </script>

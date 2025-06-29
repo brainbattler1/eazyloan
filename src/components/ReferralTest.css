@@ -1,0 +1,267 @@
+.referral-test {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.test-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+}
+
+.test-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.test-header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.test-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e1e5e9;
+}
+
+.test-section h3 {
+  margin: 0 0 15px 0;
+  color: #2d3748;
+  font-size: 18px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.status-item label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.status-item span {
+  padding: 8px 12px;
+  background: #f7fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-family: monospace;
+}
+
+.no-ref {
+  color: #e53e3e;
+  background: #fed7d7 !important;
+  border-color: #feb2b2 !important;
+}
+
+.has-ref {
+  color: #38a169;
+  background: #c6f6d5 !important;
+  border-color: #9ae6b4 !important;
+}
+
+.test-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.test-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-btn.primary {
+  background: #4299e1;
+  color: white;
+}
+
+.test-btn.primary:hover:not(:disabled) {
+  background: #3182ce;
+}
+
+.test-btn.secondary {
+  background: #718096;
+  color: white;
+}
+
+.test-btn.secondary:hover:not(:disabled) {
+  background: #4a5568;
+}
+
+.test-btn.info {
+  background: #38b2ac;
+  color: white;
+}
+
+.test-btn.info:hover:not(:disabled) {
+  background: #319795;
+}
+
+.test-btn.danger {
+  background: #e53e3e;
+  color: white;
+}
+
+.test-btn.danger:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.url-display {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.url-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 14px;
+  background: #f7fafc;
+}
+
+.copy-btn {
+  padding: 10px 12px;
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.copy-btn:hover {
+  background: #38a169;
+}
+
+.results-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-results {
+  text-align: center;
+  color: #718096;
+  font-style: italic;
+  padding: 20px;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-item {
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.result-item.success {
+  background: #f0fff4;
+  border-left-color: #38a169;
+}
+
+.result-item.warning {
+  background: #fffbeb;
+  border-left-color: #d69e2e;
+}
+
+.result-item.info {
+  background: #ebf8ff;
+  border-left-color: #4299e1;
+}
+
+.result-item.error {
+  background: #fed7d7;
+  border-left-color: #e53e3e;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.result-test {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.result-time {
+  font-size: 12px;
+  color: #718096;
+  font-family: monospace;
+}
+
+.result-value {
+  font-family: monospace;
+  font-size: 14px;
+  color: #4a5568;
+  word-break: break-all;
+}
+
+.instructions {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.instructions li {
+  margin-bottom: 8px;
+  color: #4a5568;
+}
+
+@media (max-width: 768px) {
+  .referral-test {
+    padding: 10px;
+  }
+  
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .test-buttons {
+    flex-direction: column;
+  }
+  
+  .url-display {
+    flex-direction: column;
+  }
+  
+  .url-input {
+    margin-bottom: 10px;
+  }
+}

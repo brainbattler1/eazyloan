@@ -362,21 +362,34 @@
 .loan-details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   font-size: 0.98rem;
   color: #22223b;
 }
 
-.loan-details span {
-  font-size: 0.98rem;
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 0.95rem;
   color: #64748b;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.95rem;
+  color: #22223b;
+  font-weight: 600;
 }
 
 .card-footer {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .review-progress {
@@ -401,6 +414,95 @@
 
 .review-progress .review-icon {
   color: #f59e0b;
+}
+
+/* Application Date and Actions */
+.application-date {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.approval-date {
+  color: #047857;
+  font-weight: 600;
+}
+
+.application-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-width: fit-content;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.info-btn {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.info-btn:hover {
+  background: #bfdbfe;
+}
+
+.download-btn {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #10b981;
+}
+
+.download-btn:hover {
+  background: #a7f3d0;
+}
+
+.generate-btn {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #f59e0b;
+}
+
+.generate-btn:hover {
+  background: #fde68a;
+}
+
+.action-icon {
+  font-size: 1rem;
+}
+
+.pending-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #b45309;
+  background: #fef9c3;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #fde68a;
+}
+
+.note-icon {
+  font-size: 1rem;
 }
 
 /* Application Messages */
@@ -460,8 +562,129 @@
   .loan-details {
     font-size: 0.95rem;
   }
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
   .status-badge {
     font-size: 0.92rem;
     padding: 2px 8px;
+  }
+  .application-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .action-btn {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    justify-content: center;
+  }
+  .application-date {
+    font-size: 0.85rem;
+  }
+  .pending-note {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+  }
+}
+
+/* Success Notification Styles */
+.success-notification {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  animation: slideInDown 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.success-notification::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.success-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.success-text {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.success-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  margin-left: 12px;
+}
+
+.success-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Mobile responsiveness for success notification */
+@media (max-width: 480px) {
+  .success-notification {
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .success-text {
+    font-size: 0.9rem;
+  }
+  
+  .success-icon {
+    font-size: 1.3rem;
+    margin-right: 10px;
   }
 }

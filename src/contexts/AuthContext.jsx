@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 
 const AuthContext = createContext({});
@@ -13,14 +13,75 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isBanned, setIsBanned] = useState(false);
+
+  // Function to check user profile and ban status
+  const checkUserProfile = async (authUser) => {
+    if (!authUser) {
+      setUserProfile(null);
+      setIsBanned(false);
+      return null;
+    }
+
+    try {
+      // Add timeout to profile check
+      const profilePromise = supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile check timeout')), 5000)
+      );
+      
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]);
+
+      if (error) {
+        console.error('❌ Error fetching user profile:', error);
+        setUserProfile(null);
+        setIsBanned(false);
+        return null;
+      }
+
+      setUserProfile(profile);
+      const banned = profile?.is_active === false;
+      setIsBanned(banned);
+
+      // Don't auto-sign out banned users - let them see the banned page
+      if (banned) {
+        console.log('🚫 User is banned, showing banned page...');
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('❌ Error checking user profile:', error);
+      setUserProfile(null);
+      setIsBanned(false);
+      return null;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId;
 
     const initializeAuth = async () => {
       try {
         console.log('🔄 Initializing authentication...');
+        
+        // Set a timeout to prevent endless loading
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.warn('⚠️ Auth initialization timeout, proceeding without auth');
+            setUser(null);
+            setUserProfile(null);
+            setIsBanned(false);
+            setLoading(false);
+          }
+        }, 10000); // 10 second timeout
         
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -32,13 +93,24 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (mounted) {
-          setUser(session?.user ?? null);
+          const authUser = session?.user ?? null;
+          setUser(authUser);
+          
+          // Check user profile and ban status
+          if (authUser) {
+            await checkUserProfile(authUser);
+          }
+          
+          clearTimeout(timeoutId);
           setLoading(false);
         }
       } catch (error) {
         console.error('❌ Auth initialization error:', error);
         if (mounted) {
           setUser(null);
+          setUserProfile(null);
+          setIsBanned(false);
+          clearTimeout(timeoutId);
           setLoading(false);
         }
       }
@@ -53,13 +125,26 @@ export const AuthProvider = ({ children }) => {
       console.log('🔄 Auth state changed:', event, session ? 'User present' : 'No user');
       
       if (mounted) {
-        setUser(session?.user ?? null);
+        const authUser = session?.user ?? null;
+        setUser(authUser);
+        
+        // Check user profile and ban status on auth change
+        if (authUser) {
+          await checkUserProfile(authUser);
+        } else {
+          setUserProfile(null);
+          setIsBanned(false);
+        }
+        
         setLoading(false);
       }
     });
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -92,7 +177,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: 'https://eazy-loans.com'
         }
       });
       
@@ -112,27 +197,46 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       console.log('🔄 Signing out user...');
-      const { error } = await supabase.auth.signOut();
+      
+      // Clear local state immediately to prevent hanging
+      setUser(null);
+      setUserProfile(null);
+      setIsBanned(false);
+      setLoading(false);
+      
+      // Add timeout to prevent hanging
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+      );
+      
+      const { error } = await Promise.race([signOutPromise, timeoutPromise]);
       
       if (error) {
         console.error('❌ Sign out error:', error);
+        // Even if there's an error, we've already cleared local state
+        return { error: null }; // Return success since local state is cleared
       } else {
         console.log('✅ Sign out successful');
       }
       
-      return { error };
+      return { error: null };
     } catch (error) {
       console.error('❌ Sign out exception:', error);
-      return { error };
+      // Local state is already cleared, so return success
+      return { error: null };
     }
   };
 
   const value = {
     user,
+    userProfile,
     loading,
+    isBanned,
     signIn,
     signUp,
     signOut,
+    checkUserProfile,
   };
 
   return (

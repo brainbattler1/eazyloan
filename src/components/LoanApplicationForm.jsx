@@ -1,82 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../utils/supabase';
 import './LoanApplicationForm.css';
 
-const steps = [
-  'Personal Information',
-  'Contact & Employment',
-  'References',
-  'Documents & Loan Details',
-];
-
-const initialFormData = {
-  // Personal Information
-  firstName: '',
-  lastName: '',
-  email: '',
-  idNumber: '',
-  passportNumber: '',
-  gender: '',
-  dateOfBirth: '',
-  placeOfResidence: '',
-  detailedAddress: '',
-  // Contact & Employment
-  phoneNumber: '',
-  alternatePhone: '',
-  workType: '',
-  monthlyIncome: '',
-  // References
-  reference1FirstName: '',
-  reference1LastName: '',
-  reference1Phone: '',
-  reference1Gender: '',
-  reference1Relationship: '',
-  reference2FirstName: '',
-  reference2LastName: '',
-  reference2Phone: '',
-  reference2Gender: '',
-  reference2Relationship: '',
-  // Documents & Loan Details
-  idCardFront: null,
-  idCardBack: null,
-  passport: null,
-  loanAmount: '',
-  loanPurpose: '',
-  repaymentPeriod: '30',
-};
-
 const LoanApplicationForm = ({ onClose }) => {
   const { user } = useAuth();
-  const [formData, setFormData] = useState({ ...initialFormData, email: user?.email || '' });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState({
+    // Personal Information
+    firstName: '',
+    lastName: '',
+    email: user?.email || '',
+    idNumber: '',
+    passportNumber: '',
+    gender: '',
+    dateOfBirth: '',
+    placeOfResidence: '',
+    detailedAddress: '',
+    // Contact & Employment
+    phoneNumber: '',
+    alternatePhone: '',
+    workType: '',
+    monthlyIncome: '',
+    employmentStatus: '',
+    creditScore: '',
+    // References
+    reference1FirstName: '',
+    reference1LastName: '',
+    reference1Phone: '',
+    reference1Gender: '',
+    reference1Relationship: '',
+    reference2FirstName: '',
+    reference2LastName: '',
+    reference2Phone: '',
+    reference2Gender: '',
+    reference2Relationship: '',
+    // Documents & Loan Details
+    idCardFront: null,
+    idCardBack: null,
+    passport: null,
+    loanAmount: '',
+    loanPurpose: '',
+    repaymentPeriod: '30',
+    termMonths: '1',
+  });
+
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [currentSection, setCurrentSection] = useState('personal');
 
-  // Step validation
-  const validateStep = () => {
-    switch (currentStep) {
-      case 0:
-        return formData.firstName && formData.lastName && formData.email && formData.idNumber && formData.gender && formData.dateOfBirth && formData.placeOfResidence && formData.detailedAddress;
-      case 1:
-        return formData.phoneNumber && formData.workType && formData.monthlyIncome;
-      case 2:
-        return formData.reference1FirstName && formData.reference1LastName && formData.reference1Phone && formData.reference1Gender && formData.reference1Relationship && formData.reference2FirstName && formData.reference2LastName && formData.reference2Phone && formData.reference2Gender && formData.reference2Relationship;
-      case 3:
-        return formData.loanAmount && formData.loanPurpose && formData.repaymentPeriod;
-      default:
-        return true;
+  // Debug effect to monitor income field changes
+  useEffect(() => {
+    if (formData.monthlyIncome) {
+      console.log('Monthly income value updated:', formData.monthlyIncome);
     }
-  };
+  }, [formData.monthlyIncome]);
 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
+    
+    // Debug logging for income field
+    if (name === 'monthlyIncome') {
+      console.log('Monthly income field changed:', { name, value, type });
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'file' ? files[0] : value,
     }));
+    setError(''); // Clear error when user starts typing
+  };
+
+  // Handle file upload specifically to prevent form submission
+  const handleFileChange = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+      setError(''); // Clear error when user uploads file
+    }
   };
 
   // File upload helper
@@ -84,26 +91,59 @@ const LoanApplicationForm = ({ onClose }) => {
     if (!file) return null;
     const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/${fileName}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from('loan-documents').upload(filePath, file, { cacheControl: '3600', upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from('loan-documents')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
     if (uploadError) throw uploadError;
-    const { data: { publicUrl } } = supabase.storage.from('loan-documents').getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage
+      .from('loan-documents')
+      .getPublicUrl(filePath);
     return publicUrl;
+  };
+
+  // Validation
+  const validateForm = () => {
+    const requiredFields = [
+      'firstName', 'lastName', 'email', 'idNumber', 'gender', 'dateOfBirth',
+      'placeOfResidence', 'detailedAddress', 'phoneNumber', 'workType', 'monthlyIncome',
+      'employmentStatus',
+      'reference1FirstName', 'reference1LastName', 'reference1Phone', 'reference1Gender', 'reference1Relationship',
+      'reference2FirstName', 'reference2LastName', 'reference2Phone', 'reference2Gender', 'reference2Relationship',
+      'loanAmount', 'loanPurpose', 'repaymentPeriod', 'termMonths'
+    ];
+
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`);
+        return false;
+      }
+    }
+
+    if (!formData.idCardFront || !formData.idCardBack) {
+      setError('Please upload both front and back of your ID card.');
+      return false;
+    }
+
+    return true;
   };
 
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep()) {
-      setError('Please fill in all required fields.');
-      return;
-    }
+    if (!validateForm()) return;
+
     setLoading(true);
     setError('');
+
+    // Small delay to prevent rapid submissions and reduce race conditions
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     try {
       // Upload files
       const idCardFrontUrl = await uploadFile(formData.idCardFront, 'id_card_front');
       const idCardBackUrl = await uploadFile(formData.idCardBack, 'id_card_back');
       const passportUrl = await uploadFile(formData.passport, 'passport');
+
       // Prepare data
       const applicationData = {
         user_id: user.id,
@@ -121,6 +161,8 @@ const LoanApplicationForm = ({ onClose }) => {
         alternate_phone: formData.alternatePhone || null,
         work_type: formData.workType,
         monthly_income: parseFloat(formData.monthlyIncome),
+        employment_status: formData.employmentStatus || formData.workType,
+        credit_score: formData.creditScore ? parseInt(formData.creditScore) : null,
         reference1_first_name: formData.reference1FirstName,
         reference1_last_name: formData.reference1LastName,
         reference1_phone: formData.reference1Phone,
@@ -138,266 +180,682 @@ const LoanApplicationForm = ({ onClose }) => {
         loan_amount_kes: parseFloat(formData.loanAmount),
         purpose: formData.loanPurpose,
         repayment_period_days: parseInt(formData.repaymentPeriod),
-        annual_income: parseFloat(formData.monthlyIncome) * 12,
-        employment_status: formData.workType,
-        term_months: Math.ceil(parseInt(formData.repaymentPeriod) / 30),
+        term_months: parseInt(formData.termMonths),
         status: 'pending',
+        pdf_generated: false,
       };
-      const { error: dbError } = await supabase.from('loan_applications').insert([applicationData]);
-      if (dbError) throw dbError;
-      setSubmitted(true);
+
+      // Retry logic for handling potential conflicts
+      let retryCount = 0;
+      const maxRetries = 3;
+      let success = false;
+
+      while (!success && retryCount < maxRetries) {
+        try {
+          const { error: dbError } = await supabase
+            .from('loan_applications')
+            .insert([applicationData]);
+
+          if (dbError) {
+            // If it's a duplicate key error, wait a bit and retry
+            if (dbError.code === '23505' && retryCount < maxRetries - 1) {
+              retryCount++;
+              await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+              continue;
+            }
+            throw dbError;
+          }
+          
+          success = true;
+          setSubmitted(true);
+        } catch (retryError) {
+          if (retryCount === maxRetries - 1) {
+            throw retryError;
+          }
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+        }
+      }
     } catch (err) {
-      setError(err.message || 'Submission failed.');
+      console.error('Loan application submission error:', err);
+      if (err.code === '23505') {
+        setError('There was a conflict with your application. Please try submitting again.');
+      } else {
+        setError(err.message || 'Submission failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Step navigation
-  const nextStep = () => {
-    if (!validateStep()) {
-      setError('Please fill in all required fields.');
-      return;
+  // Section navigation
+  const sections = [
+    { id: 'personal', title: 'Personal Info', icon: '👤' },
+    { id: 'contact', title: 'Contact & Work', icon: '📞' },
+    { id: 'references', title: 'References', icon: '👥' },
+    { id: 'documents', title: 'Documents', icon: '📄' },
+    { id: 'loan', title: 'Loan Details', icon: '💰' }
+  ];
+
+  const scrollToSection = (sectionId) => {
+    setCurrentSection(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    setError('');
-    setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
-  };
-  const prevStep = () => {
-    setError('');
-    setCurrentStep((s) => Math.max(s - 1, 0));
   };
 
-  // Step renderers
-  const renderPersonal = () => (
-    <div className="form-step">
-      <div className="form-grid">
-        <div className="form-group">
-          <label>First Name*</label>
-          <input name="firstName" value={formData.firstName} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Last Name*</label>
-          <input name="lastName" value={formData.lastName} onChange={handleChange} required />
-        </div>
-        <div className="form-group full-width">
-          <label>Email*</label>
-          <input name="email" type="email" value={formData.email} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>ID Card Number*</label>
-          <input name="idNumber" value={formData.idNumber} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Passport Number (Optional)</label>
-          <input name="passportNumber" value={formData.passportNumber} onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Gender*</label>
-          <select name="gender" value={formData.gender} onChange={handleChange} required>
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Date of Birth*</label>
-          <input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} required />
-        </div>
-        <div className="form-group full-width">
-          <label>Place of Residence*</label>
-          <input name="placeOfResidence" value={formData.placeOfResidence} onChange={handleChange} required />
-        </div>
-        <div className="form-group full-width">
-          <label>Detailed Address*</label>
-          <textarea name="detailedAddress" value={formData.detailedAddress} onChange={handleChange} required rows={2} />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderContact = () => (
-    <div className="form-step">
-      <div className="form-grid">
-        <div className="form-group">
-          <label>M-Pesa Phone Number*</label>
-          <input name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Alternate Phone</label>
-          <input name="alternatePhone" value={formData.alternatePhone} onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Work Type*</label>
-          <input name="workType" value={formData.workType} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Monthly Income (KES)*</label>
-          <input name="monthlyIncome" type="number" value={formData.monthlyIncome} onChange={handleChange} required />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderReferences = () => (
-    <div className="form-step">
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Reference 1 First Name*</label>
-          <input name="reference1FirstName" value={formData.reference1FirstName} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 1 Last Name*</label>
-          <input name="reference1LastName" value={formData.reference1LastName} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 1 Phone*</label>
-          <input name="reference1Phone" value={formData.reference1Phone} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 1 Gender*</label>
-          <select name="reference1Gender" value={formData.reference1Gender} onChange={handleChange} required>
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Reference 1 Relationship*</label>
-          <input name="reference1Relationship" value={formData.reference1Relationship} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 2 First Name*</label>
-          <input name="reference2FirstName" value={formData.reference2FirstName} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 2 Last Name*</label>
-          <input name="reference2LastName" value={formData.reference2LastName} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 2 Phone*</label>
-          <input name="reference2Phone" value={formData.reference2Phone} onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label>Reference 2 Gender*</label>
-          <select name="reference2Gender" value={formData.reference2Gender} onChange={handleChange} required>
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Reference 2 Relationship*</label>
-          <input name="reference2Relationship" value={formData.reference2Relationship} onChange={handleChange} required />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderDocuments = () => (
-    <div className="form-step">
-      <div className="form-grid">
-        <div className="form-group">
-          <label>ID Card Front</label>
-          <input name="idCardFront" type="file" accept="image/*,application/pdf" onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>ID Card Back</label>
-          <input name="idCardBack" type="file" accept="image/*,application/pdf" onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Passport (Optional)</label>
-          <input name="passport" type="file" accept="image/*,application/pdf" onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Loan Amount (KES)*</label>
-          <input name="loanAmount" type="number" value={formData.loanAmount} onChange={handleChange} required min="5000" max="5000000" step="100" />
-        </div>
-        <div className="form-group">
-          <label>Loan Purpose*</label>
-          <select name="loanPurpose" value={formData.loanPurpose} onChange={handleChange} required>
-            <option value="">Select</option>
-            <option value="business">Business</option>
-            <option value="education">Education</option>
-            <option value="medical">Medical</option>
-            <option value="home_improvement">Home Improvement</option>
-            <option value="debt_consolidation">Debt Consolidation</option>
-            <option value="emergency">Emergency</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Repayment Period (Days)*</label>
-          <select name="repaymentPeriod" value={formData.repaymentPeriod} onChange={handleChange} required>
-            <option value="7">7 days</option>
-            <option value="14">14 days</option>
-            <option value="30">30 days</option>
-            <option value="45">45 days</option>
-            <option value="60">60 days</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Step progress bar
-  const renderProgressBar = () => (
-    <div className="step-progress-bar-wrapper" aria-label="Form progress" aria-valuenow={currentStep + 1} aria-valuemin={1} aria-valuemax={steps.length} role="progressbar">
-      <div
-        className="step-progress-bar"
-        style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-      />
-    </div>
-  );
-
-  // Step indicator
-  const renderStepIndicator = () => (
-    <div className="step-indicator">
-      {steps.map((label, idx) => (
-        <div key={label} className={`step ${currentStep >= idx ? 'active' : ''} ${currentStep === idx ? 'current' : ''}`}>
-          <div className="step-number">{idx + 1}</div>
-          <div className="step-label">{label}</div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // Main render
-  return (
-    <div className="loan-form-overlay">
-      <div className="loan-form-container multi-step" style={{ background: '#fff', borderRadius: 24, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.13)', padding: 0, maxWidth: 900, width: '100%' }}>
-        <div className="loan-form-header">
-          <h2>Apply for Quick Loan</h2>
-          <button className="close-btn" onClick={onClose} aria-label="Close">✕</button>
-        </div>
-        {renderProgressBar()}
-        {submitted ? (
-          <div className="success-message">
-            <div className="success-icon">✅</div>
-            <h2>Application Submitted!</h2>
-            <p>Your loan application has been successfully submitted. We'll review it and get back to you soon.</p>
-            <button className="submit-btn" onClick={onClose}>Close</button>
+  if (submitted) {
+    return (
+      <div className="loan-form-container">
+        <div className="success-screen">
+          <div className="success-animation">
+            <div className="checkmark">✓</div>
           </div>
-        ) : (
-          <form className="loan-form" onSubmit={handleSubmit}>
-            {renderStepIndicator()}
-            {error && <div className="error-message">{error}</div>}
-            {currentStep === 0 && renderPersonal()}
-            {currentStep === 1 && renderContact()}
-            {currentStep === 2 && renderReferences()}
-            {currentStep === 3 && renderDocuments()}
-            <div className="form-actions">
-              {currentStep > 0 && <button type="button" className="cancel-btn" onClick={prevStep}>Previous</button>}
-              {currentStep < steps.length - 1 && <button type="button" className="submit-btn" onClick={nextStep}>Next</button>}
-              {currentStep === steps.length - 1 && <button type="submit" className="submit-btn" disabled={loading}>{loading ? 'Submitting...' : 'Submit Application'}</button>}
-            </div>
-          </form>
-        )}
+          <h2>Application Submitted Successfully!</h2>
+          <p>Your loan application has been received and is being reviewed. We'll contact you within 24 hours.</p>
+          <button className="primary-btn" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="loan-form-container">
+      <div className="form-header">
+        <button className="close-btn" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+        <h1>Quick Loan Application</h1>
+        <p>Complete all sections to apply for your loan</p>
+      </div>
+
+      {/* Navigation Pills */}
+      <div className="section-nav">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            className={`nav-pill ${currentSection === section.id ? 'active' : ''}`}
+            onClick={() => scrollToSection(section.id)}
+          >
+            <span className="nav-icon">{section.icon}</span>
+            <span className="nav-text">{section.title}</span>
+          </button>
+        ))}
+      </div>
+
+      <form className="loan-form" onSubmit={handleSubmit}>
+        {error && (
+          <div className="error-alert">
+            <span className="error-icon">⚠️</span>
+            {error}
+          </div>
+        )}
+
+        {/* Personal Information Section */}
+        <section id="personal" className="form-section">
+          <div className="section-header">
+            <h2>👤 Personal Information</h2>
+            <p>Tell us about yourself</p>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="firstName">First Name *</label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              value={formData.firstName}
+              onChange={handleChange}
+              placeholder="Enter your first name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lastName">Last Name *</label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Enter your last name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">Email Address *</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="your.email@example.com"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="idNumber">ID Card Number *</label>
+            <input
+              id="idNumber"
+              name="idNumber"
+              type="text"
+              value={formData.idNumber}
+              onChange={handleChange}
+              placeholder="Enter your ID number"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="passportNumber">Passport Number (Optional)</label>
+            <input
+              id="passportNumber"
+              name="passportNumber"
+              type="text"
+              value={formData.passportNumber}
+              onChange={handleChange}
+              placeholder="Enter passport number if available"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="gender">Gender *</label>
+            <select
+              id="gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select your gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="dateOfBirth">Date of Birth *</label>
+            <input
+              id="dateOfBirth"
+              name="dateOfBirth"
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="placeOfResidence">Place of Residence *</label>
+            <input
+              id="placeOfResidence"
+              name="placeOfResidence"
+              type="text"
+              value={formData.placeOfResidence}
+              onChange={handleChange}
+              placeholder="City, County"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="detailedAddress">Detailed Address *</label>
+            <textarea
+              id="detailedAddress"
+              name="detailedAddress"
+              value={formData.detailedAddress}
+              onChange={handleChange}
+              placeholder="Street address, building, apartment number"
+              rows={3}
+              required
+            />
+          </div>
+        </section>
+
+        {/* Contact & Employment Section */}
+        <section id="contact" className="form-section">
+          <div className="section-header">
+            <h2>📞 Contact & Employment</h2>
+            <p>How can we reach you and your work details</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="phoneNumber">M-Pesa Phone Number *</label>
+            <input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="tel"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="0712345678"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="alternatePhone">Alternate Phone Number</label>
+            <input
+              id="alternatePhone"
+              name="alternatePhone"
+              type="tel"
+              value={formData.alternatePhone}
+              onChange={handleChange}
+              placeholder="0712345678 (optional)"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="workType">Type of Work *</label>
+            <input
+              id="workType"
+              name="workType"
+              type="text"
+              value={formData.workType}
+              onChange={handleChange}
+              placeholder="e.g., Teacher, Driver, Business Owner"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="employmentStatus">Employment Status *</label>
+            <select
+              id="employmentStatus"
+              name="employmentStatus"
+              value={formData.employmentStatus}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select employment status</option>
+              <option value="employed">Employed</option>
+              <option value="self_employed">Self Employed</option>
+              <option value="business_owner">Business Owner</option>
+              <option value="freelancer">Freelancer</option>
+              <option value="student">Student</option>
+              <option value="retired">Retired</option>
+              <option value="unemployed">Unemployed</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="creditScore">Credit Score (Optional)</label>
+            <input
+              id="creditScore"
+              name="creditScore"
+              type="number"
+              value={formData.creditScore}
+              onChange={handleChange}
+              placeholder="Enter your credit score (300-850)"
+              min="300"
+              max="850"
+            />
+            <small className="field-hint">If you know your credit score, it helps us process your application faster</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="monthlyIncome">Monthly Income (KES) *</label>
+            <div className="input-with-clear">
+              <input
+                id="monthlyIncome"
+                name="monthlyIncome"
+                type="number"
+                value={formData.monthlyIncome}
+                onChange={handleChange}
+                placeholder="Enter your monthly income (e.g., 50000)"
+                min="1000"
+                step="1000"
+                autoComplete="off"
+                required
+              />
+              {formData.monthlyIncome && (
+                <button
+                  type="button"
+                  className="clear-btn"
+                  onClick={() => setFormData(prev => ({ ...prev, monthlyIncome: '' }))}
+                  title="Clear income field"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <small className="field-hint">Enter your actual monthly income in Kenyan Shillings</small>
+            {formData.monthlyIncome && parseFloat(formData.monthlyIncome) < 1000 && (
+              <small className="field-error">Income must be at least KES 1,000</small>
+            )}
+          </div>
+        </section>
+
+        {/* References Section */}
+        <section id="references" className="form-section">
+          <div className="section-header">
+            <h2>👥 References</h2>
+            <p>Provide two people who can vouch for you</p>
+          </div>
+
+          <div className="reference-group">
+            <h3>Reference 1</h3>
+            
+            <div className="form-group">
+              <label htmlFor="reference1FirstName">First Name *</label>
+              <input
+                id="reference1FirstName"
+                name="reference1FirstName"
+                type="text"
+                value={formData.reference1FirstName}
+                onChange={handleChange}
+                placeholder="Reference first name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference1LastName">Last Name *</label>
+              <input
+                id="reference1LastName"
+                name="reference1LastName"
+                type="text"
+                value={formData.reference1LastName}
+                onChange={handleChange}
+                placeholder="Reference last name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference1Phone">Phone Number *</label>
+              <input
+                id="reference1Phone"
+                name="reference1Phone"
+                type="tel"
+                value={formData.reference1Phone}
+                onChange={handleChange}
+                placeholder="0712345678"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference1Gender">Gender *</label>
+              <select
+                id="reference1Gender"
+                name="reference1Gender"
+                value={formData.reference1Gender}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference1Relationship">Relationship *</label>
+              <input
+                id="reference1Relationship"
+                name="reference1Relationship"
+                type="text"
+                value={formData.reference1Relationship}
+                onChange={handleChange}
+                placeholder="e.g., Friend, Colleague, Family"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="reference-group">
+            <h3>Reference 2</h3>
+            
+            <div className="form-group">
+              <label htmlFor="reference2FirstName">First Name *</label>
+              <input
+                id="reference2FirstName"
+                name="reference2FirstName"
+                type="text"
+                value={formData.reference2FirstName}
+                onChange={handleChange}
+                placeholder="Reference first name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference2LastName">Last Name *</label>
+              <input
+                id="reference2LastName"
+                name="reference2LastName"
+                type="text"
+                value={formData.reference2LastName}
+                onChange={handleChange}
+                placeholder="Reference last name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference2Phone">Phone Number *</label>
+              <input
+                id="reference2Phone"
+                name="reference2Phone"
+                type="tel"
+                value={formData.reference2Phone}
+                onChange={handleChange}
+                placeholder="0712345678"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference2Gender">Gender *</label>
+              <select
+                id="reference2Gender"
+                name="reference2Gender"
+                value={formData.reference2Gender}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reference2Relationship">Relationship *</label>
+              <input
+                id="reference2Relationship"
+                name="reference2Relationship"
+                type="text"
+                value={formData.reference2Relationship}
+                onChange={handleChange}
+                placeholder="e.g., Friend, Colleague, Family"
+                required
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Documents Section */}
+        <section id="documents" className="form-section">
+          <div className="section-header">
+            <h2>📄 Documents</h2>
+            <p>Upload required identification documents</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="idCardFront">ID Card Front *</label>
+            <div className="file-upload">
+              <input
+                id="idCardFront"
+                name="idCardFront"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+                className="file-input"
+                required
+              />
+              <label htmlFor="idCardFront" className="file-label" onClick={(e) => e.stopPropagation()}>
+                <span className="file-icon">📷</span>
+                <span className="file-text">
+                  {formData.idCardFront ? formData.idCardFront.name : 'Take Photo or Upload ID Front'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="idCardBack">ID Card Back *</label>
+            <div className="file-upload">
+              <input
+                id="idCardBack"
+                name="idCardBack"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+                className="file-input"
+                required
+              />
+              <label htmlFor="idCardBack" className="file-label" onClick={(e) => e.stopPropagation()}>
+                <span className="file-icon">📷</span>
+                <span className="file-text">
+                  {formData.idCardBack ? formData.idCardBack.name : 'Take Photo or Upload ID Back'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="passport">Passport (Optional)</label>
+            <div className="file-upload">
+              <input
+                id="passport"
+                name="passport"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+                className="file-input"
+              />
+              <label htmlFor="passport" className="file-label" onClick={(e) => e.stopPropagation()}>
+                <span className="file-icon">📄</span>
+                <span className="file-text">
+                  {formData.passport ? formData.passport.name : 'Upload Passport (Optional)'}
+                </span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        {/* Loan Details Section */}
+        <section id="loan" className="form-section">
+          <div className="section-header">
+            <h2>💰 Loan Details</h2>
+            <p>Specify your loan requirements</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="loanAmount">Loan Amount (KES) *</label>
+            <input
+              id="loanAmount"
+              name="loanAmount"
+              type="number"
+              value={formData.loanAmount}
+              onChange={handleChange}
+              placeholder="50000"
+              min="5000"
+              max="5000000"
+              step="100"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="loanPurpose">Loan Purpose *</label>
+            <select
+              id="loanPurpose"
+              name="loanPurpose"
+              value={formData.loanPurpose}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select loan purpose</option>
+              <option value="business">Business</option>
+              <option value="education">Education</option>
+              <option value="medical">Medical</option>
+              <option value="home_improvement">Home Improvement</option>
+              <option value="debt_consolidation">Debt Consolidation</option>
+              <option value="emergency">Emergency</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="termMonths">Loan Term (Months) *</label>
+            <select
+              id="termMonths"
+              name="termMonths"
+              value={formData.termMonths}
+              onChange={handleChange}
+              required
+            >
+              <option value="1">1 month</option>
+              <option value="2">2 months</option>
+              <option value="3">3 months</option>
+              <option value="6">6 months</option>
+              <option value="12">12 months</option>
+              <option value="24">24 months</option>
+              <option value="36">36 months</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="repaymentPeriod">Repayment Period (Days) *</label>
+            <select
+              id="repaymentPeriod"
+              name="repaymentPeriod"
+              value={formData.repaymentPeriod}
+              onChange={handleChange}
+              required
+            >
+              <option value="7">7 days</option>
+              <option value="14">14 days</option>
+              <option value="30">30 days</option>
+              <option value="45">45 days</option>
+              <option value="60">60 days</option>
+              <option value="90">90 days</option>
+            </select>
+          </div>
+        </section>
+
+        {/* Submit Button */}
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="submit-btn"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Submitting...
+              </>
+            ) : (
+              'Submit Application'
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
 
-export default LoanApplicationForm; 
+export default LoanApplicationForm;

@@ -1,58 +1,57 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use environment variables or fallback to development values
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 console.log('🔄 Initializing Supabase client...');
-console.log('URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
-console.log('Key:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
+console.log('URL:', supabaseUrl !== 'https://your-project.supabase.co' ? '✅ Set' : '⚠️ Using fallback');
+console.log('Key:', supabaseAnonKey !== 'your-anon-key' ? '✅ Set' : '⚠️ Using fallback');
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  const errorMessage = 'Missing Supabase environment variables. Please check your .env file.';
-  console.error('❌', errorMessage);
+// Check if we're using fallback values
+const isUsingFallback = supabaseUrl === 'https://your-project.supabase.co' || supabaseAnonKey === 'your-anon-key';
+
+if (isUsingFallback) {
+  console.warn('⚠️ Using fallback Supabase configuration. For full functionality, please set up your .env file.');
   
-  // Show user-friendly error
+  // Show user-friendly warning instead of error
   if (typeof window !== 'undefined') {
-    document.body.innerHTML = `
-      <div style="
-        padding: 2rem; 
-        text-align: center; 
+    const existingWarning = document.getElementById('supabase-warning');
+    if (!existingWarning) {
+      const warningDiv = document.createElement('div');
+      warningDiv.id = 'supabase-warning';
+      warningDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 1rem;
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
         font-family: system-ui, sans-serif;
-        max-width: 600px;
-        margin: 2rem auto;
-        border: 2px solid #ef4444;
-        border-radius: 0.5rem;
-        background: #fef2f2;
-      ">
-        <h1 style="color: #ef4444; margin-bottom: 1rem;">Configuration Error</h1>
-        <p style="margin-bottom: 1rem;">The application is missing required Supabase configuration.</p>
-        <p style="margin-bottom: 1rem;">Please ensure your <code>.env</code> file contains:</p>
-        <pre style="
-          background: white; 
-          padding: 1rem; 
-          border-radius: 0.25rem; 
-          text-align: left;
-          font-size: 0.875rem;
-          border: 1px solid #d1d5db;
-        ">VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key</pre>
-        <button onclick="window.location.reload()" style="
-          padding: 0.5rem 1rem;
-          background: #3b82f6;
+        font-size: 0.875rem;
+        color: #92400e;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      `;
+      warningDiv.innerHTML = `
+        <strong>⚠️ Development Mode:</strong> Using fallback Supabase configuration. 
+        Some features may not work. To enable full functionality, create a <code>.env</code> file with your Supabase credentials.
+        <button onclick="this.parentElement.remove()" style="
+          float: right;
+          background: #f59e0b;
           color: white;
           border: none;
-          border-radius: 0.25rem;
+          border-radius: 4px;
+          padding: 0.25rem 0.5rem;
           cursor: pointer;
-          font-size: 1rem;
-          margin-top: 1rem;
-        ">
-          Reload After Fixing
-        </button>
-      </div>
-    `;
+          font-size: 0.75rem;
+        ">×</button>
+      `;
+      document.body.appendChild(warningDiv);
+    }
   }
-  
-  throw new Error(errorMessage);
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

@@ -128,3 +128,8 @@ try {
     </div>
   `;
 }
+
+// Development mode optimizations
+if (typeof window !== 'undefined') {
+  console.log('✅ Development mode ready');
+}

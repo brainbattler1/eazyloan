@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://eazy-loans.com/sitemap.xml
+
+# Disallow crawling of admin or sensitive areas (if any)
+# Disallow: /admin/
+# Disallow: /api/
